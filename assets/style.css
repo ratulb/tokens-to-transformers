@@ -2,13 +2,13 @@
    Serif body, one accent, generous measure. No sidebars, no dates, no tags. */
 
 :root {
-  --paper: #fbfaf6;
-  --ink: #1c1915;
-  --muted: #6b6259;
+  --paper: #fdfdfd;
+  --ink: #111;
+  --muted: #828282;
   --accent: #8c3b22;
-  --rule: #e3ddd2;
-  --box: #f4f1e9;
-  --code: #f1eee6;
+  --rule: #e8e8e8;
+  --box: #f6f6f6;
+  --code: #eef;
 }
 
 * { box-sizing: border-box; }
@@ -69,7 +69,7 @@ a:hover { text-decoration-thickness: 2px; }
 .lede {
   font-size: 1.3rem;
   line-height: 1.6;
-  color: #3a352e;
+  color: #333;
 }
 
 /* Cover */
@@ -109,7 +109,7 @@ a:hover { text-decoration-thickness: 2px; }
   font-variant: small-caps;
   letter-spacing: 0.05em;
 }
-.chapter-list p { margin: 0.3rem 0 0; color: #3a352e; font-size: 1.05rem; }
+.chapter-list p { margin: 0.3rem 0 0; color: #333; font-size: 1.05rem; }
 
 .coming-next { padding-left: 1.2rem; }
 .coming-next li { margin: 0.5rem 0; }
@@ -164,6 +164,7 @@ code {
 }
 pre {
   background: var(--code);
+  border: 1px solid var(--rule);
   padding: 1rem 1.2rem;
   overflow-x: auto;
   border-radius: 4px;
