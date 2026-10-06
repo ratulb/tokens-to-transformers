@@ -1,0 +1,9 @@
+{% assign chapters = site.chapters | sort: 'chapter' %}
+<ol class="chapter-list">
+{% for ch in chapters %}
+  <li>
+    <a href="{{ ch.url | relative_url }}"><span class="chnum">Chapter {{ ch.chapter }}</span>{{ ch.title }}</a>
+    {% if ch.description %}<p>{{ ch.description }}</p>{% endif %}
+  </li>
+{% endfor %}
+</ol>

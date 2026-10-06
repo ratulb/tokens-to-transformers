@@ -1,0 +1,20 @@
+title: "Tokens to Transformers in Mojo"
+description: "Build a GPT-2 from scratch in Mojo — tokenizer to training loop."
+url: "https://ratulb.github.io"
+baseurl: "/tokens-to-transformers"
+
+collections:
+  chapters:
+    output: true
+    permalink: /:name/
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - "*.gemspec"

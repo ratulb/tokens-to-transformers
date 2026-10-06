@@ -1,0 +1,27 @@
+{% assign chapters = site.chapters | sort: 'chapter' %}
+{% assign idx = nil %}
+{% for ch in chapters %}
+  {% if ch.url == page.url %}{% assign idx = forloop.index0 %}{% endif %}
+{% endfor %}
+{% if idx != nil %}
+<nav class="prev-next" aria-label="Chapter navigation">
+  <div class="pn-prev">
+    {% if idx > 0 %}
+      {% assign p = chapters[idx | minus: 1] %}
+      <a href="{{ p.url | relative_url }}"><span>← Previous</span>Chapter {{ p.chapter }} · {{ p.title }}</a>
+    {% else %}
+      <a href="{{ '/' | relative_url }}"><span>← Start</span>Cover</a>
+    {% endif %}
+  </div>
+  <div class="pn-next">
+    {% assign n = idx | plus: 1 %}
+    {% if n < chapters.size %}
+      {% assign q = chapters[n] %}
+      <a href="{{ q.url | relative_url }}"><span>Next →</span>Chapter {{ q.chapter }} · {{ q.title }}</a>
+    {% else %}
+      {% assign coming = chapters.size | plus: 1 %}
+      <span class="soon"><span>Next →</span>Chapter {{ coming }} — coming soon</span>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}
