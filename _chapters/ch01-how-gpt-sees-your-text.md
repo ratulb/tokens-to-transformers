@@ -553,7 +553,16 @@ Eleven characters in, two integers out. Now you know why those two integers are 
 
 ## Further reading
 
-Sennrich, Haddow and Birch (2016), *Neural Machine Translation of Rare Words with Subword Units* — the subword paper; short and still the best statement of the size-versus-coverage trade. Gage (1994), *A New Algorithm for Data Compression* — BPE's origin as compression, useful precisely because it was never about language. Radford et al. (2019), *Language Models are Unsupervised Multitask Learners* (GPT-2) — the byte-level vocab plus regex pre-tokenizer as shipped. Karpathy's minbpe ([github](https://github.com/karpathy/minbpe)) and his tokenizer video — the closest pedagogical comparable; Python-first, with a regex variant that matches cl100k, where this chapter takes on the full production-compat burden instead. Raschka, *Build a Large Language Model (From Scratch)*, Chapter 2 — his tokenizer chapter, the spine this chapter mirrors; his book continues through pretraining and instruction tuning without BERT, while ours diverges first at the handoff (we build the `tiktoken` equivalent rather than importing it) and again at the end (we add the encoder side). OpenAI `tiktoken` — the format authority and the baseline every number here is measured against. Warren, *Hacker's Delight* — the bit-manipulation idioms behind `mbpe`'s byte-level matchers in `bpe/pretokenizer.mojo` (the SWAR-style word-at-a-time tests live there, not in this chapter). Unicode UCD — ground truth for the class table in `bpe/unicode_tables.mojo`. Code: `github.com/ratulb/simple_bpe` for the toy, `github.com/ratulb/mbpe` for the engine.
+- Sennrich, Haddow and Birch (2016), *Neural Machine Translation of Rare Words with Subword Units* — the subword paper; short and still the best statement of the size-versus-coverage trade.
+- Gage (1994), *A New Algorithm for Data Compression* — BPE's origin as compression, useful precisely because it was never about language.
+- Radford et al. (2019), *Language Models are Unsupervised Multitask Learners*
+- (GPT-2) — the byte-level vocab plus regex pre-tokenizer as shipped.
+- Karpathy's minbpe ([github](https://github.com/karpathy/minbpe)) and his tokenizer video — the closest pedagogical comparable;
+- https://huggingface.co/learn/llm-course/chapter6/5
+- Raschka, *Build a Large Language Model (From Scratch)*, Chapter 2 — his tokenizer chapter, the spine this chapter mirrors; his book continues through pretraining and instruction tuning without BERT, while ours diverges first at the handoff (we build the `tiktoken` equivalent rather than importing it) and again at the end (we add the encoder side).
+-  OpenAI `tiktoken` — the format authority and the baseline every number here is measured against.
+-  Warren, *Hacker's Delight* — the bit-manipulation idioms behind `mbpe`'s byte-level matchers in `bpe/pretokenizer.mojo` (the SWAR-style word-at-a-time tests live there, not in this chapter).
+-  Unicode UCD — ground truth for the class table in `bpe/unicode_tables.mojo`. Code: `github.com/ratulb/simple_bpe` for the toy, `github.com/ratulb/mbpe` for the engine.
 
 ## What's next
 
