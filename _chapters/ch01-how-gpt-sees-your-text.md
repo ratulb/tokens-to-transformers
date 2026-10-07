@@ -9,8 +9,6 @@ description: >
   
 ---
 
-This chapter builds a BPE tokenizer twice: once as a character-level BPE you build yourself - the minimal version, then as the production-grade version that matches tiktoken byte for byte.
-
 > **What this chapter covers**
 >
 > - What a token is, and why models use tokens instead of raw text
