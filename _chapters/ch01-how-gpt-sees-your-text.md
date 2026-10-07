@@ -9,7 +9,7 @@ description: >
   those gaps with a production engine that trains, encodes, and matches tiktoken byte for byte.
 ---
 
-This chapter does one thing: it takes text and turns it into the integers a model actually eats, and back again. Part I you build yourself — a small character-level BPE in Mojo you can hold in your head. Part II builds the real thing — the byte-level engine that trains, encodes, and matches tiktoken byte for byte. Part III proves it — benchmarks, then a fourth tokenizer on the same engine. By the end you will understand why the toy isn't enough, and what each fix costs.
+This chapter does one thing: it builds a tokenizer — the component that turns text into the integers a model operates on, and back again. Part I: a character-level BPE you build yourself - the minimal version, before we add the machinery that makes it production-grade. Part II: the real thing, a byte-level engine that trains, encodes, and matches tiktoken byte for byte. Part III: the proof — benchmarks, then a fourth tokenizer on the same engine. By the end you'll understand why the toy isn't enough, and what each fix costs.
 
 Nothing here is pseudo-code. Every snippet is adapted from two repos you can clone — `simple_bpe`, the toy, and `mbpe`, the engine. Exact revisions and test commands live in the "Code for this chapter" note before §3.
 
