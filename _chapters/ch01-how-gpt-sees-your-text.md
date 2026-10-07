@@ -19,8 +19,6 @@ description: >
 > - What makes the implementation fast
 > - How to verify correctness — and extend the engine with a new tokenizer
 
-- Contents
-{:toc}
 
 ---
 
