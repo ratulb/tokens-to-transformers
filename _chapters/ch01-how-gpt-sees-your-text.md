@@ -5,8 +5,8 @@ book: "Tokens to Transformers in Mojo"
 chapter: 1
 permalink: /ch01/
 description: >
-  In this chapter we build a BPE tokenizer by in Mojo, watch where the toy breaks, then close
-  those gaps with a production engine that trains, encodes, and matches tiktoken byte for byte.
+  In this chapter we build a simple BPE tokenizer in Mojo, observe its shortcomings and then explore a production    ready tokenizer that trains, encodes/decodes and matches tiktoken byte for byte.
+  
 ---
 
 This chapter builds a BPE tokenizer twice: once as a character-level BPE you build yourself - the minimal version, then as the production-grade version that matches tiktoken byte for byte.
