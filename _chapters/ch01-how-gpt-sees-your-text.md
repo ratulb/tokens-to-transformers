@@ -63,11 +63,9 @@ Note the leading space in `" world"`. Whitespace isn't stripped and added back l
 
 Scripts like Devanagari or emoji make the point sharper. Under GPT-2's vocabulary, `नमस्ते` and `😀` are not single tokens — they fall back to several byte-level pieces each, because GPT-2 never learned them whole. A different vocabulary trained on more Hindi or more emoji might grant them single IDs. Whether a string is "one token" is a property of the vocabulary, not of the script. Try it yourself once `mbpe` is installed (§14 lists the exact commands): encode an Assamese line under `gpt2`, `cl100k` and `o200k` and compare tokens per character across the three. That ratio is the tax a tokenizer levies on a language — and it is why tokenizer choice matters far beyond English.
 
-The history here is short. Philip Gage described byte pair encoding as a compression trick in 1994. Sennrich, Haddow and Birch repurposed it for translation in 2016: encode rare words as sequences of subword units and the vocabulary problem goes away. OpenAI shipped it in GPT-2 in 2019 (Radford et al., "Language Models are Unsupervised Multitask Learners") with a byte-level vocabulary and a regex pre-tokenizer, and that shape carried through GPT-3, GPT-4, and Llama 3. A wrinkle in the family tree: Llama 1 and 2 and early Mistral releases used SentencePiece-style BPE rather than a GPT-2 regex front — Llama 3 moved to a tiktoken-style design. The transformer changed repeatedly under the tokenizer. The BPE core barely moved.
-
 ## 2. What should a token be?
 
-Every tokenizer picks a fixed vocabulary and rewrites all input as entries from that table. Three options present themselves. Two of them are not practical as we would see.
+Every tokenizer picks a fixed vocabulary and rewrites all input as entries from that table. There are three options. The first two fail, which shows why the third wins.
 
 **Words.** Intuitive, short sequences, embeddings carry meaning directly. But no fixed table covers English plus names, typos, identifiers like `resurrect_db_connection()`, URLs, and every other language. Whatever misses becomes `<UNK>`, and the information is gone:
 
@@ -107,11 +105,9 @@ Common words stay compact. Rare words decompose into smaller pieces. Unknown inp
 
 One more angle before we build, because it hooks directly into Chapter 3. Vocabulary size is not free: every entry owns up to two rows — one in the embedding matrix, one in the output projection (GPT-2 ties the two, so one; most larger models keep both). A 50k vocabulary at 768 dimensions is ~38M parameters per side; 200k at the same width is ~150M. Bigger tables mean shorter sequences but fatter matrices — and every ID you add is an ID the model must learn to use. Keep that trade in mind when §6 picks a target size and §12 counts lines in a `.tiktoken` file. The tokenizer spends parameters before the transformer sees a single flop.
 
-The next question is mechanical: which pieces deserve an ID? BPE's answer is disarmingly simple.
+Which pieces get an ID? BPE answers with one rule:
 
 > Find the most frequent adjacent pair. Merge it. Repeat.
-
-Five words that expand into the rest of this chapter.
 
 > **Code for this chapter.** Everything below is adapted from two repos — `simple_bpe` (the toy) and `mbpe` (the engine). Pin them before building:
 >
@@ -199,7 +195,7 @@ else:
     i += 1
 ```
 
-Two notes on this code. First, holding `i` after a merge is harmless but does no real work here: the fresh token `a+b` can never equal `a`, so the same rule cannot refire at the same position. The branch is kept because it mirrors the standard formulation and costs nothing. Second, the splice itself rebuilds the word's list on every occurrence — quadratic work per word in the worst case. That is exactly the "slow but transparent" bargain of the toy: you can see every step, and you pay for the clarity. §11 removes the cost without changing the result.
+Two notes on this code. First, holding `i` after a merge is harmless but does no real work here: the fresh token `a+b` can never equal `a`, so the same rule cannot refire at the same position. The branch is kept because it mirrors the standard formulation and costs nothing. Second, the splice itself rebuilds the word's list on every occurrence — quadratic work per word in the worst case. This is slower but easier to follow; §11 removes the cost without changing the result.
 
 The trace below needs one label first: run the toy itself on the single word `aaabdaaabac` and there is almost nothing to learn — the base is `<UNK>` at 0 plus the sorted alphabet `a, b, c, d` at 1–4, merges take IDs 5, 6, 7 onward, and a one-word corpus collapses greedily toward the whole word. Correct for the toy, useless as a teaching trace: most counts sit at 1 and the ending is foreordained. So what follows uses the production engine instead: byte-level base of 256, ties broken by first-seen order, on `mbpe`'s `GPT2Tokenizer` (`tests/test_tokenizer.mojo`, `test_wikipedia_example`, the canonical Wikipedia byte-pair example). Same algorithm as the toy, correct base for the example. Start with bytes:
 
@@ -237,7 +233,7 @@ The toy as written uses a strict `<` scan over its freshly rebuilt dict, so on t
 
 Count pairs, merge the winner, repeat, newest merge takes the next ID. That loop is training, and `mbpe` pins this exact run: `train(["aaabdaaabac"], 259)` then `encode("aaabdaaabac")` returns `[258, 100, 258, 97, 99]`.
 
-**Encoding.** Split into words, break each word into characters, replay the merges in the order they were learned. Our toy splitter does two humble things: it turns every space into a `Ġ` marker (U+0120) prefixed on the next word, so `"hello world"` becomes `["hello", "Ġworld"]`, and it splits periods off words. A cheap stand-in for GPT-2's regex — §5 replaces it with the real one. This is the only place `Ġ` is introduced, and decoding is its exact inverse. (Where does `Ġ` itself come from? It is OpenAI's `bytes_to_unicode` table showing through: byte `0x20`, the space, is remapped to the visible character U+0120 so BPE never has to stare at raw whitespace. The toy borrows the same marker rather than inventing its own.)
+**Encoding.** Split into words, break each word into characters, replay the merges in the order they were learned. Our toy splitter does two things: it turns every space into a `Ġ` marker (U+0120) prefixed on the next word, so `"hello world"` becomes `["hello", "Ġworld"]`, and it splits periods off words. A cheap stand-in for GPT-2's regex — §5 replaces it with the real one. This is the only place `Ġ` is introduced, and decoding is its exact inverse. (Where does `Ġ` itself come from? It is OpenAI's `bytes_to_unicode` table showing through: byte `0x20`, the space, is remapped to the visible character U+0120 so BPE never has to stare at raw whitespace. The toy borrows the same marker rather than inventing its own.)
 
 ```mojo
 def encode(self, text: String) raises -> List[Int]:
@@ -248,7 +244,7 @@ def encode(self, text: String) raises -> List[Int]:
     return ids^
 ```
 
-The `.get(token, 0)` is the `<UNK>` fallback. The `_tokenize` loop itself is O(rules x tokens) — it scans every rule against every word. Slow, transparent, correct. We fix the speed in §11 without changing the result.
+The `.get(token, 0)` is the `<UNK>` fallback. The `_tokenize` loop itself is O(rules x tokens) — it scans every rule against every word. We fix the speed in §11 without changing the result.
 
 **Decoding.** Look up each ID, join, turn `Ġ` back into a space:
 
@@ -269,11 +265,11 @@ tok.decode(tok.encode("This is not a token."))
 # "This is not a token."
 ```
 
-It works. It also has four holes, and each hole is a chapter section in disguise.
+It works, but it has four gaps, covered in §§5–12.
 
 ## 4. Where the toy breaks
 
-1. **No real pre-tokenization.** Our splitter does two humble things: it turns spaces into `Ġ` markers and splits periods off words. That already stops merges from crossing spaces — `"the cat"` never becomes one token here. What it gets wrong is everything else a real front handles: punctuation glued to words (`"world!"` keeps its bang), contractions (`"don't"` never splits), digits running into letters. GPT-2's regex puts letters, digits, punctuation and whitespace in separate lanes with an optional leading space, and merges stay inside their lane. Without those lanes the toy learns pieces that don't generalize.
+1. **No real pre-tokenization.** Our splitter does two things: it turns spaces into `Ġ` markers and splits periods off words. That already stops merges from crossing spaces — `"the cat"` never becomes one token here. What it gets wrong is everything else a real pre-tokenizer handles: punctuation glued to words (`"world!"` keeps its bang), contractions (`"don't"` never splits), digits running into letters. GPT-2's regex puts letters, digits, punctuation and whitespace in separate lanes with an optional leading space, and merges stay inside their lane. Without those lanes the toy learns pieces that don't generalize.
 
 2. **Character-level base.** Anything not in training becomes `<UNK>`. Send an emoji the corpus never saw and you get `[0]`. Production tokenizers start from 256 bytes, so every input decomposes to something. No `<UNK>`, ever.
 
@@ -281,9 +277,7 @@ It works. It also has four holes, and each hole is a chapter section in disguise
 
 4. **A private file format.** Our save/load is JSON with our own layout. The ecosystem speaks `.tiktoken`: one line per token, base64 bytes plus rank. If you can't read and write that, you can't share vocabularies with anyone.
 
-> The toy teaches the concept. Each of these four gaps is real, and closing all four — byte-level vocab, regex pre-tokenization, rank-based encoding, and the file format — is what separates a teaching implementation from a production one. The rest of this chapter is about what it takes to close them. Not just correctness, but speed, and compatibility with the ecosystem you'll be working in.
-
-That sentence is the hinge.
+> The toy teaches the concept. Closing those four gaps — byte-level vocab, regex pre-tokenization, rank-based encoding, and the file format — is what separates a teaching implementation from a production one.
 
 ---
 
@@ -311,7 +305,7 @@ trait PreTokenizer(Movable & Defaultable & Deinitable & Writable):
     # ... byte_to_id / id_to_byte (identity defaults), name(), special_tokens() (empty default)
 ```
 
-`split` returns zero-copy views — no per-word allocation, the encode hot path — and the trait's default `count_words` delegates to it. Each production front overrides `count_words` with a fused loop that never materializes words at all — the training path. The engine is `BPETokenizer[PT]`, generic over the trait. GPT-2, GPT-4 and GPT-4o are three instantiations of one engine; the engine itself never branches on which one it is. §14 puts that claim to the test by adding a fourth.
+`split` returns zero-copy views — no per-word allocation, the encode hot path — and the trait's default `count_words` delegates to it. Each production pre-tokenizer overrides `count_words` with a fused loop that never materializes words at all — the training path. The engine is `BPETokenizer[PT]`, generic over the trait. GPT-2, GPT-4 and GPT-4o are three instantiations of one engine; the engine itself never branches on which one it is. §14 puts that claim to the test by adding a fourth.
 
 ## 6. Training by counting and merging
 
@@ -332,7 +326,7 @@ On `low low low lower lowest` the weighting is what makes it work — and this i
 | `(w, e)` | 1 + 1 = 2 |
 | `(e, r)`, `(e, s)`, `(s, t)` | 1 each |
 
-`(l, o)` and `(o, w)` tie at 5; the tie goes to `(l, o)` since `l` precedes `o` precedes `w` in every word and was inserted first. Token 256 = `"lo"`. The new pair `(lo, w)` inherits the full 5 and merges next to `"low"`. Then `(low, e)` at 2 merges to `"lowe"`. Frequency is the only signal. No dictionary, no morphology. Just counts — weighted by how often each word showed up.
+`(l, o)` and `(o, w)` tie at 5; the tie goes to `(l, o)` since `l` precedes `o` precedes `w` in every word and was inserted first. Token 256 = `"lo"`. The new pair `(lo, w)` inherits the full 5 and merges next to `"low"`. Then `(low, e)` at 2 merges to `"lowe"`. The only signal is frequency: pair counts weighted by how often each word showed up.
 
 Two details carry forward. First, ties go to the incumbent — the pair inserted earliest when the corpus was first walked — so the order is reproducible and the ranks that downstream weights depend on don't shuffle between runs. The toy's fresh-recount loop can't promise this on its own; the engine's incremental table plus its first-seen rule can, and the test suite pins it. Second, step 5 is what makes training affordable: each merge touches affected words only, via a `where_dict` from pair to word list, instead of rescanning the corpus. That removes the per-merge rescan — the dominant cost on large corpora. Picking the best pair each round still scans the distinct-pair table, so "near-linear" describes scaling with corpus size in practice on real text, not a formal bound. A heap or lazy priority queue would tighten it further; the repo notes that as future work. §11 returns to what was measured versus what is claimed.
 
@@ -347,9 +341,9 @@ No counting. The merge list is a script; encoding executes it. This also closes 
 
 Replay `low`-family rules on `lowering`, a word the corpus never contained: `l o w e r i n g` -> `lo w e r i n g` -> `low e r i n g` -> `lowe r i n g`. The learned prefix fires on unseen input because the prefix is shared. That generalization is why a bounded vocabulary covers unbounded text.
 
-Order is load-bearing. `(lo, w)` cannot fire before `(l, o)` creates `lo`. Rank order isn't convention, it's correctness: every merge's parents have lower rank than the merge itself. That invariant — `bytes[merged] == bytes[left] + bytes[right]` — is checked by test (`test_tiktoken_merge_consistency`), and §12 uses it to recover merge rules from a bare vocabulary file that never stored them.
+`(lo, w)` cannot fire before `(l, o)` creates `lo`. Rank order is correctness, not convention: every merge's parents have lower rank than the merge itself. That invariant — `bytes[merged] == bytes[left] + bytes[right]` — is checked by test (`test_tiktoken_merge_consistency`), and §12 uses it to recover merge rules from a bare vocabulary file that never stored them.
 
-**The round-trip guarantee, stated cleanly.** For a byte-level BPE over raw bytes, `decode(encode(s)) == s` holds for every input — that is the point of starting from 256 bytes. Two things people mistake for exceptions are not. *Distribution shift* (a vocabulary trained on news meeting medical text) changes token *quality* — more, smaller pieces — never round-trip correctness; the bytes still come back exactly. What can break the round trip in practice lives outside BPE proper: *special tokens* like `<|endoftext|>`, which the encoder may recognize or treat as literal text depending on `encode` versus `encode_ordinary` and the `allowed_special` setting (§12), and *invalid UTF-8*, where the byte sequence survives but the host `String` may not render it. Bytes in, same bytes out — specials and string validity are the only asterisks, and both are handled explicitly where they arise.
+**The round-trip guarantee.** For byte-level BPE over raw bytes, `decode(encode(s)) == s` holds for every input — that is the point of starting from 256 bytes. Two things people mistake for exceptions are not. *Distribution shift* (a vocabulary trained on news meeting medical text) changes token *quality* — more, smaller pieces — never round-trip correctness; the bytes still come back exactly. What can break the round trip in practice lives outside BPE proper: *special tokens* like `<|endoftext|>`, which the encoder may recognize or treat as literal text depending on `encode` versus `encode_ordinary` and the `allowed_special` setting (§12), and *invalid UTF-8*, where the byte sequence survives but the host `String` may not render it. The bytes come back exactly — specials and string validity are the only asterisks, and both are handled explicitly where they arise.
 
 ## 8. Whole Unicode, exactly
 
@@ -368,15 +362,15 @@ Two quirks fall out of the byte scheme, and both live in the pre-tokenizer, not 
 
 `SEQUENTIAL` means a freshly trained tokenizer numbers byte 0x00 as rank 0; `SHUFFLED` means it numbers bytes through the table, so a freshly trained vocabulary already matches the file convention. The enum names the training convention.
 
-What does this change on load? Less than you might expect. `load_tiktoken` rebuilds `byte_to_rank` from the file's own rank assignments, and merge recovery (`_recover_merges` via `_bpe`) works purely from file bytes plus file ranks — checked: `o200k.tiktoken` loaded under a `SEQUENTIAL` front encodes `hello world`, control bytes and `café` identically to the `SHUFFLED` front, and round-trips byte-exact either way. The mapping does not fail on load, because the file carries the ranks and the loader trusts them.
+What does this change on load? Less than you might expect. `load_tiktoken` rebuilds `byte_to_rank` from the file's own rank assignments, and merge recovery (`_recover_merges` via `_bpe`) works purely from file bytes plus file ranks — checked: `o200k.tiktoken` loaded under a `SEQUENTIAL` pre-tokenizer encodes `hello world`, control bytes and `café` identically to the `SHUFFLED` pre-tokenizer, and round-trips byte-exact either way. The mapping does not fail on load, because the file carries the ranks and the loader trusts them.
 
-It fails in two places the loader cannot fix. First, fresh `train()` builds base IDs through `id_to_byte` — identity or table — so training an o200k-style vocabulary under `SEQUENTIAL` bakes the wrong base assignment into every merged ID downstream. Second, and the one you will actually meet: the front travels with its split rules. Load a file under the wrong *family* front and the regexes diverge (`"1234"`, `iPhone` in §9) even where the base bytes agree — right bytes, wrong pieces, wrong IDs, round-trip still green. So the check is two parts, mapping first: does this front's `ByteMapping` match the vocabulary it is about to serve, and does its split family match the file? The file declares neither; the type does.
+It fails in two places the loader cannot fix. First, fresh `train()` builds base IDs through `id_to_byte` — identity or table — so training an o200k-style vocabulary under `SEQUENTIAL` bakes the wrong base assignment into every merged ID downstream. Second, and the one you will actually meet: the pre-tokenizer travels with its split rules. Load a file under the wrong *family* pre-tokenizer and the regexes diverge (`"1234"`, `iPhone` in §9) even where the base bytes agree — right bytes, wrong pieces, wrong IDs, round-trip still green. So the check is two parts, mapping first: does this pre-tokenizer's `ByteMapping` match the vocabulary it is about to serve, and does its split family match the file? The file declares neither; the type does.
 
 ## 9. Three families, one algorithm
 
-The byte table was shared. The split rules are not. GPT-2 and the GPT-4 family run the same BPE over different pieces and learn incompatible vocabularies — and GPT-4o's front differs from GPT-4's yet again. The split happens before BPE runs, so identical bytes take different paths to different IDs — and the round trip still comes back green either way.
+The byte table is shared across families; the split rules differ. GPT-2 and the GPT-4 family run the same BPE over different pieces and learn incompatible vocabularies — and GPT-4o's pre-tokenizer differs from GPT-4's yet again. The split happens before BPE runs, so identical bytes take different paths to different IDs — and the round trip still comes back green either way.
 
-The cells below come from `mbpe`'s own matchers, not copied from docs. Reproduce them with a few lines calling `split` on each front (`GPT2Pretokenizer`, `GPT4Pretokenizer[SEQUENTIAL]`, `GPT4Pretokenizer[SHUFFLED]`):
+The cells below come from `mbpe`'s own matchers, not copied from docs. Reproduce them with a few lines calling `split` on each pre-tokenizer (`GPT2Pretokenizer`, `GPT4Pretokenizer[SEQUENTIAL]`, `GPT4Pretokenizer[SHUFFLED]`):
 
 | Input | GPT-2 | cl100k | o200k |
 | ----- | ----- | ------ | ----- |
@@ -387,11 +381,11 @@ The cells below come from `mbpe`'s own matchers, not copied from docs. Reproduce
 | `"abcDEF"` | `["abcDEF"]` | `["abcDEF"]` | `["abc", "DEF"]` |
 | `"ABCdef"` | `["ABCdef"]` | `["ABCdef"]` | `["ABCdef"]` |
 
-Two patterns to read off the table. First, the GPT-4 family shares three behaviors GPT-2 lacks: case-folded contractions, digit runs capped at 3, and letter runs that absorb one leading non-letter — that last rule is what keeps `"$hello"` whole and turns `"foo/bar"` into `"foo", "/bar"` identically on cl100k and o200k. Second, o200k's distinctive addition is only the case-transition rule: `iPhone` and `abcDEF` split where the other two keep them whole, while all-caps-led `ABCdef` stays whole under all three — the split bites on lower-to-upper transitions and single-lowercase leads, not on every case boundary. One more probe: o200k's punctuation pattern also names `/` explicitly, but the runs don't show it biting — `"a/"` gives `["a", "/"]`, `"//"` gives `["//"]`, and `"a//b"` gives `["a", "//", "b"]`, identically on all three fronts. The `/` difference between GPT-2 and the GPT-4 family comes entirely from the letter-rule prefix. Same BPE, different splits, incompatible IDs. Hence three pre-tokenizers — and one engine behind them that never branches on which one it is.
+Two patterns to read off the table. First, the GPT-4 family shares three behaviors GPT-2 lacks: case-folded contractions, digit runs capped at 3, and letter runs that absorb one leading non-letter — that last rule is what keeps `"$hello"` whole and turns `"foo/bar"` into `"foo", "/bar"` identically on cl100k and o200k. Second, o200k's distinctive addition is only the case-transition rule: `iPhone` and `abcDEF` split where the other two keep them whole, while all-caps-led `ABCdef` stays whole under all three — the split bites on lower-to-upper transitions and single-lowercase leads, not on every case boundary. One more probe: o200k's punctuation pattern also names `/` explicitly, but the runs don't show it biting — `"a/"` gives `["a", "/"]`, `"//"` gives `["//"]`, and `"a//b"` gives `["a", "//", "b"]`, identically on all three pre-tokenizers. The `/` difference between GPT-2 and the GPT-4 family comes entirely from the letter-rule prefix. The same BPE with different splits produces incompatible IDs. Hence three pre-tokenizers — and one engine behind them that never branches on which one it is.
 
-## 10. One engine, many fronts
+## 10. One engine, many pre-tokenizers
 
-Here is the whole trick of Part II in one declaration:
+Part II in one declaration:
 
 ```mojo
 struct BPETokenizer[PT: PreTokenizer = GPT2Pretokenizer](
@@ -403,13 +397,13 @@ struct BPETokenizer[PT: PreTokenizer = GPT2Pretokenizer](
     # ...
 ```
 
-`PT` is compile-time. `BPETokenizer[GPT2Pretokenizer]` and `BPETokenizer[GPT4Pretokenizer[SHUFFLED]]` are different types, different codegen, pre-tokenizer logic inlined at each call site, dead branch eliminated. You can't swap fronts at runtime — and you shouldn't, because the front determines the vocabulary and the vocabulary is baked into weights. The compiler ruling it out is a feature.
+`PT` is compile-time. `BPETokenizer[GPT2Pretokenizer]` and `BPETokenizer[GPT4Pretokenizer[SHUFFLED]]` are different types, different codegen, pre-tokenizer logic inlined at each call site, dead branch eliminated. You can't swap pre-tokenizers at runtime — and you shouldn't, because the pre-tokenizer determines the vocabulary and the vocabulary is baked into weights. Compile-time checking prevents mismatches.
 
 `GPT4Pretokenizer` is itself generic over `ByteMapping`: `SEQUENTIAL` gives cl100k, `SHUFFLED` gives o200k, with a `comptime if` picking the rule set per specialization. Three shipped tokenizers, one engine, no `if tokenizer == GPT2` anywhere in the hot path.
 
-`Tokenizer` (encode/decode) and `PreTokenizer` (split/count/map) are different traits. The first is what a tokenizer *is*. The second is what its front *does*. `BPETokenizer[PT]` takes the second as a parameter and implements the first.
+`Tokenizer` (encode/decode) and `PreTokenizer` (split/count/map) are different traits. The first is what a tokenizer *is*. The second is what its pre-tokenizer *does*. `BPETokenizer[PT]` takes the second as a parameter and implements the first.
 
-One term needs defining before §12: *special tokens* such as `<|endoftext|>` are control IDs that sit outside the mergeable vocabulary. They mark boundaries (end of document, fill-in-the-middle slots) rather than text content, they are declared per family on the front, and the file format deliberately does not carry them — §12 explains why.
+One term needs defining before §12: *special tokens* such as `<|endoftext|>` are control IDs that sit outside the mergeable vocabulary. They mark boundaries (end of document, fill-in-the-middle slots) rather than text content, they are declared per family on the pre-tokenizer, and the file format deliberately does not carry them — §12 explains why.
 
 ## 11. How it earns its speed
 
@@ -423,7 +417,7 @@ Six layers, each removing a specific cost. Read each one as an answer to "where 
 4. **Incremental counts.** Naively, each of V merges rescans W words of length L: O(V × W × L), too slow to use on a real corpus. `mbpe` updates only the pairs each occurrence touches (`(a,b)`, `(prev,a)`, `(b,next)` destroyed; `(prev,merged)`, `(merged,next)` created) and finds affected words through a `where_dict` instead of scanning for them. The rescan is gone; the per-round best-pair scan over distinct pairs remains, so treat the speedup as large and measured on real corpora rather than asymptotically tight.
 5. **Two encoders.** Naively, one algorithm serves all word lengths and loses somewhere: a scan is quadratic on long URLs, a heap's setup dominates on short words. Under 32 tokens `mbpe` linearly scans; at 32+ it switches to a heap over a linked list, O(n log n). The 32 is `comptime SCAN_LIMIT` in `bpe/tokenizer.mojo`, set from measuring the crossover on real corpora per the code comment. There is no published crossover curve — only the constant and its comment — so treat 32 as a measured tunable rather than a derived one. Flip the one number, rerun `benchmarks/run.sh` on your hardware, watch the long-word columns move. That reproducibility is the claim.
 
-Layer 6 is free: compile-time specialization inlines the front into encode, so the hot path carries no dispatch.
+Sixth, compile-time specialization inlines the pre-tokenizer into encode, so the hot path carries no dispatch.
 
 ## 12. Files on disk and the Python face
 
@@ -439,7 +433,7 @@ tok.train(["the cat sat on the mat"], vocab_size=300)
 tok.save_tiktoken("mine.tiktoken")
 ```
 
-Round-trips are exact across save/load. Compatibility is checked by test, not asserted.
+Round-trips are exact across save/load. Compatibility is verified by byte-for-byte tests on real corpora.
 
 ---
 
@@ -479,7 +473,7 @@ For a Python user the comparison that counts is bindings vs `tiktoken` (Py): rou
 
 ## 14. One more tokenizer, built live
 
-§§5–10 argued the engine is generic. The payoff: a character-level front, thirty lines, no engine changes. First, this front splits per codepoint, so merges can only ever join bytes *within* one codepoint — training exhausts its pairs quickly on multibyte text and the learned vocabulary stays shallow. That makes it a deliberately weak fourth tokenizer and a strong architecture test: if even this front trains, encodes, decodes, saves and loads untouched, the genericity claim holds. A whitespace or code-aware splitter would be the more convincing production fourth; the point here is the plug, not the front. Second, the trait sketch in §5 omitted defaults for brevity — `count_words` defaults to delegating to `split`, and `name()` / `special_tokens()` have defaults this front partially overrides — so the struct below compiles with only what it must define.
+§§5–10 argued the engine is generic. The payoff: a character-level pre-tokenizer, thirty lines, no engine changes. First, this pre-tokenizer splits per codepoint, so merges can only ever join bytes *within* one codepoint — training exhausts its pairs quickly on multibyte text and the learned vocabulary stays shallow. That makes it a deliberately weak fourth tokenizer and a strong architecture test: if even this pre-tokenizer trains, encodes, decodes, saves and loads untouched, the genericity claim holds. A whitespace or code-aware splitter would be the more convincing production fourth; the point here is the plug, not the pre-tokenizer. Second, the trait sketch in §5 omitted defaults for brevity — `count_words` defaults to delegating to `split`, and `name()` / `special_tokens()` have defaults this pre-tokenizer partially overrides — so the struct below compiles with only what it must define.
 
 ```mojo
 struct CharPretokenizer(PreTokenizer):
@@ -521,9 +515,9 @@ var tok = BPETokenizer[CharPretokenizer]()
 
 Train, encode, decode, save, load — all present, all working. The tests round-trip multibyte text (`café`, `中文`, `😀`, Assamese `বন্ধ ঠাইৰ ভয়`) including characters training never saw, with no `<UNK>`. Bytes are the fallback. That is §2's promise, exercised.
 
-Adding a tokenizer was writing a struct and naming it as a parameter. Nothing else moved.
+Adding a tokenizer requires only writing a struct and naming it as a parameter.
 
-For context: most tokenizer libraries already offer pluggable pre-tokenizers — Hugging Face `tokenizers` lets you compose normalizers, pre-tokenizers and models at runtime with training and serialization to match. The distinction here is narrower: `mbpe` specializes the whole pipeline at compile time for the front in use, so the split loop, byte mapping and merge tables inline into the hot path with no dispatch left. Runtime composition buys flexibility; comptime specialization buys the inlined loop. A new family here is a new front — thirty lines, one trait, full train/encode/decode/save/load from the moment it compiles. To see the pattern carry weight beyond a demo, the natural next front is a whitespace or code-aware splitter; the scaffolding for it is exactly what this section exercised.
+For context: most tokenizer libraries already offer pluggable pre-tokenizers — Hugging Face `tokenizers` lets you compose normalizers, pre-tokenizers and models at runtime with training and serialization to match. The distinction here is narrower: `mbpe` specializes the whole pipeline at compile time for the pre-tokenizer in use, so the split loop, byte mapping and merge tables inline into the hot path with no dispatch left. Runtime composition allows mixing components at runtime; compile-time specialization inlines the loop. A new family here is a new pre-tokenizer — thirty lines, one trait, full train/encode/decode/save/load from the moment it compiles. To see the pattern carry weight beyond a demo, the natural next pre-tokenizer is a whitespace or code-aware splitter; the scaffolding for it is exactly what this section exercised.
 
 From Python, the same engine is one import away — this is also the setup for the §1 exercise on tokens per character:
 
@@ -538,11 +532,11 @@ for enc in ["gpt2", "cl100k", "o200k"]:
 
 ## Pitfalls
 
-Things that will bite you when you extend this code. Not hypothetical — each one cost an evening.
+Things that will bite you when you extend this code.
 
 **Stale `_mbpe.so`.** Python imports the compiled library, not source. Edit Mojo, re-run Python, nothing changes until you rebuild. The test runner rebuilds from scratch for this reason.
 
-**Wrong front for the file.** Loads fine, round-trips fine, IDs wrong for the model. Two things must match the vocabulary being served — the `ByteMapping` (matters at fresh-train time, §8) and the split family (matters on every encode, §9). Check both first; round-trip green proves byte handling, not family agreement.
+**Wrong pre-tokenizer for the file.** Loads fine, round-trips fine, IDs wrong for the model. Two things must match the vocabulary being served — the `ByteMapping` (matters at fresh-train time, §8) and the split family (matters on every encode, §9). Check both first; round-trip green proves byte handling, not family agreement.
 
 **Specials vanish across save/load.** By contract. Built-ins come back via the trait. Customs need re-registration.
 
@@ -554,16 +548,16 @@ Things that will bite you when you extend this code. Not hypothetical — each o
 
 ## Takeaways
 
-A model never sees text. BPE finds frequent pairs, merges them, repeats; encoding replays in rank order and never counts; splitting comes first and decides the vocabulary. Subwords with a byte fallback give bounded tables, short sequences, no `<UNK>`. One generic engine plus a compile-time front gives three OpenAI tokenizers and a thirty-line fourth. Speed comes from six accumulated wins — views, arena, lookup cache, incremental counts, two encoders, specialization. Compatibility is a test suite, not a claim.
+A model never sees text. BPE finds frequent pairs, merges them, repeats; encoding replays in rank order and never counts; splitting comes first and decides the vocabulary. Subwords with a byte fallback give bounded tables, short sequences, no `<UNK>`. One generic engine plus a compile-time pre-tokenizer gives three OpenAI tokenizers and a thirty-line fourth. Speed comes from six accumulated wins — views, arena, lookup cache, incremental counts, two encoders, specialization. Compatibility is verified by byte-for-byte tests on real corpora.
 
 Eleven characters in, two integers out. Now you know why those two integers are what they are — and what it costs to get them right.
 
-**Try it.** Three exercises that close the remaining gaps with your own hands: (1) give the toy a flat rank table — replace the rule scan in `_tokenize` with a string-keyed rank table that repeatedly merges the lowest-rank adjacent pair, and confirm identical IDs on the HF corpus (this is gap 3, built; derive each rule's rank from its insertion order in `self.merges`, which matches its vocab index past the base); (2) measure the tax — encode one Assamese paragraph under `gpt2`, `cl100k`, `o200k` with the §14 snippet and report tokens per character alongside the byte-fallback fraction; (3) write the whitespace front — a `PreTokenizer` that splits on whitespace runs only, train it to 1000 merges on `benchmarks/corpus.txt` (the Alice text shipped in the repo, ~1 MB), and compare its vocabulary against the character front's. Each takes an evening; together they are Chapter 1 made yours.
+**Try it.** Three exercises that close the remaining gaps with your own hands: (1) give the toy a flat rank table — replace the rule scan in `_tokenize` with a string-keyed rank table that repeatedly merges the lowest-rank adjacent pair, and confirm identical IDs on the HF corpus (this is gap 3, built; derive each rule's rank from its insertion order in `self.merges`, which matches its vocab index past the base); (2) measure the tax — encode one Assamese paragraph under `gpt2`, `cl100k`, `o200k` with the §14 snippet and report tokens per character alongside the byte-fallback fraction; (3) write the whitespace pre-tokenizer — a `PreTokenizer` that splits on whitespace runs only, train it to 1000 merges on `benchmarks/corpus.txt` (the Alice text shipped in the repo, ~1 MB), and compare its vocabulary against the character pre-tokenizer's. Each takes a few hours.
 
 ## Further reading
 
-Sennrich, Haddow and Birch (2016), *Neural Machine Translation of Rare Words with Subword Units* — the subword paper; short and still the best statement of the size-versus-coverage trade. Gage (1994), *A New Algorithm for Data Compression* — BPE's origin as compression, useful precisely because it was never about language. Radford et al. (2019), *Language Models are Unsupervised Multitask Learners* (GPT-2) — the byte-level vocab plus regex front as shipped. Karpathy's minbpe ([github](https://github.com/karpathy/minbpe)) and his tokenizer video — the closest pedagogical comparable; Python-first, with a regex variant that matches cl100k, where this chapter takes on the full production-compat burden instead. Raschka, *Build a Large Language Model (From Scratch)*, Chapter 2 — his tokenizer chapter, the spine this chapter mirrors; his book continues through pretraining and instruction tuning without BERT, while ours diverges first at the handoff (we build the `tiktoken` equivalent rather than importing it) and again at the end (we add the encoder side). OpenAI `tiktoken` — the format authority and the baseline every number here is measured against. Warren, *Hacker's Delight* — the bit-manipulation idioms behind `mbpe`'s byte-level matchers in `bpe/pretokenizer.mojo` (the SWAR-style word-at-a-time tests live there, not in this chapter). Unicode UCD — ground truth for the class table in `bpe/unicode_tables.mojo`. Code: `github.com/ratulb/simple_bpe` for the toy, `github.com/ratulb/mbpe` for the engine.
+Sennrich, Haddow and Birch (2016), *Neural Machine Translation of Rare Words with Subword Units* — the subword paper; short and still the best statement of the size-versus-coverage trade. Gage (1994), *A New Algorithm for Data Compression* — BPE's origin as compression, useful precisely because it was never about language. Radford et al. (2019), *Language Models are Unsupervised Multitask Learners* (GPT-2) — the byte-level vocab plus regex pre-tokenizer as shipped. Karpathy's minbpe ([github](https://github.com/karpathy/minbpe)) and his tokenizer video — the closest pedagogical comparable; Python-first, with a regex variant that matches cl100k, where this chapter takes on the full production-compat burden instead. Raschka, *Build a Large Language Model (From Scratch)*, Chapter 2 — his tokenizer chapter, the spine this chapter mirrors; his book continues through pretraining and instruction tuning without BERT, while ours diverges first at the handoff (we build the `tiktoken` equivalent rather than importing it) and again at the end (we add the encoder side). OpenAI `tiktoken` — the format authority and the baseline every number here is measured against. Warren, *Hacker's Delight* — the bit-manipulation idioms behind `mbpe`'s byte-level matchers in `bpe/pretokenizer.mojo` (the SWAR-style word-at-a-time tests live there, not in this chapter). Unicode UCD — ground truth for the class table in `bpe/unicode_tables.mojo`. Code: `github.com/ratulb/simple_bpe` for the toy, `github.com/ratulb/mbpe` for the engine.
 
 ## What's next
 
-Chapter 2 builds attention from scratch — the operation that turns these IDs into context. Chapter 3 assembles a GPT-2 model around it. Chapter 4 pretrains that model on TinyStories. Chapter 5 fine-tunes it for classification. Chapter 6 builds the BERT encoder side — with one caveat carried from this chapter: BERT's canonical tokenizer is WordPiece, not BPE, so Chapter 6 either ports a WordPiece front onto the same engine or states exactly where the BPE stack stops and WordPiece takes over. All in Mojo: bytes in, IDs out, and everything after operating on IDs. The tokenizer you just built produces Chapter 2's input.
+Chapter 2 builds attention from scratch — the operation that turns these IDs into context. Chapter 3 assembles a GPT-2 model around it. Chapter 4 pretrains that model on TinyStories. Chapter 5 fine-tunes it for classification. Chapter 6 builds the BERT encoder side — with one caveat carried from this chapter: BERT's canonical tokenizer is WordPiece, not BPE, so Chapter 6 either ports a WordPiece pre-tokenizer onto the same engine or states exactly where the BPE stack stops and WordPiece takes over. All in Mojo: bytes in, IDs out, and everything after operating on IDs. The tokenizer you just built produces Chapter 2's input.
