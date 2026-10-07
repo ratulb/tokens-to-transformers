@@ -7,6 +7,9 @@ tokenizer, an attention mechanism, a GPT-2 model, and a training loop — all in
 [Mojo](https://www.modular.com/mojo), all from first principles, with no framework
 underneath you. Every chapter ends with code you can run.
 
+We take a code first approach. Reader is expected to have heard about Transformers, seen few
+youtube videos and have seen what a deep neural network is. If you have read "Build a Large Language Model (From Scratch)" by Sebastian Raschka - that is even better.
+
 The book is grounded in two open-source libraries: **[mbpe](https://github.com/ratulb/mbpe)**
 (a production BPE tokenizer, tiktoken-compatible) and
 **[Tenmo](https://github.com/ratulb/tenmo)** (a tensor library and neural network
