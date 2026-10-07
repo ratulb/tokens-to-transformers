@@ -22,7 +22,8 @@ description: >
 
 ---
 
-**Part I — Learn BPE (§§1–4).** A character-level BPE you can hold in your head. It builds, runs, and shows the four gaps Part II closes.
+
+**Part I — Learn BPE.** A small character-level tokenizer, built from scratch. It works, but not suitable for production deployment. The whole point of this part is to understand what a BPE tokenizer has to accomplish and how it could do it. It has got shortcomings. In Part II, we explore `mbpe` - which circumvent these issues.
 
 ---
 
