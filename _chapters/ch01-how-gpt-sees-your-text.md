@@ -5,10 +5,8 @@ book: "Tokens to Transformers in Mojo"
 chapter: 1
 permalink: /ch01/
 description: >
-  Eleven characters go in, two integers come out. In this chapter we build
-  a BPE tokenizer by hand in Mojo, watch where the toy breaks, then close
-  those gaps with a production engine that trains, encodes, and matches
-  tiktoken byte for byte.
+  In this chapter we build a BPE tokenizer by hand in Mojo, watch where the toy breaks, then close
+  those gaps with a production engine that trains, encodes, and matches tiktoken byte for byte.
 ---
 
 This chapter does one thing: it takes text and turns it into the integers a model actually eats, and back again. Part I you build yourself — a small character-level BPE in Mojo you can hold in your head. Part II builds the real thing — the byte-level engine that trains, encodes, and matches tiktoken byte for byte. Part III proves it — benchmarks, then a fourth tokenizer on the same engine. By the end you will understand why the toy isn't enough, and what each fix costs.
