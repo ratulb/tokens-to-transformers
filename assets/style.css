@@ -1,25 +1,35 @@
 /* Tokens to Transformers — a book, not a blog.
-   Serif body, one accent, generous measure. No sidebars, no dates, no tags. */
+   Serif body, generous measure. No sidebars, no dates, no tags.
+   Color system ported from techcottage: greenish gradient backdrop, light
+   text with shadow, amber links, code on solid dark surfaces. */
 
 :root {
-  --paper: #fdfdfd;
-  --ink: #111;
-  --muted: #828282;
-  --accent: #8c3b22;
-  --rule: #e8e8e8;
-  --box: #f6f6f6;
-  --code: #eef;
+  --bg-gradient: linear-gradient(120deg, #0650b1, rgb(0, 128, 0));
+  --ink: #d4d4d8;
+  --muted: #d4d4d8;
+  --accent: #fbbf24;
+  --accent-hover: #ffffff;
+  --rule: rgba(255, 255, 255, 0.15);
+  --box: transparent;
+  --code: #161b22;
+  --code-ink: #e6edf3;
 }
 
 * { box-sizing: border-box; }
 
+html, body {
+  background: var(--bg-gradient) !important;
+  background-attachment: fixed !important;
+  min-height: 100vh;
+}
+
 body {
   margin: 0;
-  background: var(--paper);
   color: var(--ink);
   font-family: "Iowan Old Style", Charter, Georgia, "Times New Roman", serif;
   font-size: 1.125rem;
   line-height: 1.75;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .wrap {
@@ -33,6 +43,7 @@ body {
   border-bottom: 1px solid var(--rule);
   padding: 0.85rem 0;
   font-size: 1rem;
+  background: transparent;
 }
 .site-header .wrap {
   display: flex;
@@ -49,7 +60,7 @@ body {
   color: var(--muted);
   text-decoration: none;
 }
-.site-header nav a:hover { color: var(--accent); }
+.site-header nav a:hover { color: var(--accent-hover); }
 
 /* Type */
 h1, h2, h3 { line-height: 1.25; font-weight: 600; }
@@ -58,8 +69,9 @@ h2 { font-size: 1.5rem; margin: 2.2em 0 0.7em; }
 h3 { font-size: 1.2rem; margin: 1.8em 0 0.6em; }
 
 a { color: var(--accent); }
-a:hover { text-decoration-thickness: 2px; }
+a:hover { color: var(--accent-hover); }
 
+/* Cover */
 .kicker {
   color: var(--muted);
   font-variant: small-caps;
@@ -69,21 +81,21 @@ a:hover { text-decoration-thickness: 2px; }
 .lede {
   font-size: 1.3rem;
   line-height: 1.6;
-  color: #333;
 }
 
-/* Cover */
 .cta {
   display: inline-block;
   margin: 1rem 0 0.5rem;
   padding: 0.6rem 1.4rem;
   background: var(--accent);
-  color: #fff;
+  color: #161b22;
   text-decoration: none;
   border-radius: 3px;
   font-size: 1.1rem;
+  font-weight: 600;
+  text-shadow: none;
 }
-.cta:hover { color: #fff; background: #76311c; }
+.cta:hover { color: #161b22; background: #ffffff; }
 
 /* Chapter list: the table of contents. */
 .chapter-list {
@@ -109,7 +121,7 @@ a:hover { text-decoration-thickness: 2px; }
   font-variant: small-caps;
   letter-spacing: 0.05em;
 }
-.chapter-list p { margin: 0.3rem 0 0; color: #333; font-size: 1.05rem; }
+.chapter-list p { margin: 0.3rem 0 0; font-size: 1.05rem; }
 
 .coming-next { padding-left: 1.2rem; }
 .coming-next li { margin: 0.5rem 0; }
@@ -128,17 +140,20 @@ blockquote {
   margin: 1.5rem 0;
   padding: 0.9rem 1.2rem;
   background: var(--box);
+  border: 1px solid var(--rule);
   border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0;
   font-size: 1.02rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 blockquote p { margin: 0.5rem 0; }
 blockquote ul, blockquote ol { margin: 0.5rem 0; padding-left: 1.3rem; }
-blockquote pre { background: var(--code); }
 
 /* In-chapter table of contents (kramdown {:toc}). */
 #markdown-toc {
   border: 1px solid var(--rule);
   background: var(--box);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   padding: 1rem 1.2rem;
   font-size: 1rem;
   list-style: none;
@@ -154,21 +169,25 @@ blockquote pre { background: var(--code); }
 #markdown-toc a { text-decoration: none; color: var(--ink); }
 #markdown-toc a:hover { color: var(--accent); }
 
-/* Code */
+/* Code: solid dark surfaces, never the gradient. */
 code {
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.88em;
   background: var(--code);
+  color: var(--code-ink);
   padding: 0.1em 0.35em;
   border-radius: 3px;
+  text-shadow: none;
 }
 pre {
   background: var(--code);
-  border: 1px solid var(--rule);
+  color: var(--code-ink);
   padding: 1rem 1.2rem;
   overflow-x: auto;
   border-radius: 4px;
   line-height: 1.55;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  text-shadow: none;
 }
 pre code { background: none; padding: 0; }
 
@@ -206,6 +225,7 @@ thead th { border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink)
   text-decoration: none;
   color: var(--ink);
   height: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 .prev-next a:hover { border-color: var(--accent); }
 .prev-next span span, .prev-next a span {
@@ -225,6 +245,7 @@ thead th { border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink)
   padding: 1.2rem 0 2rem;
   color: var(--muted);
   font-size: 0.95rem;
+  background: transparent;
 }
 .site-footer a { color: var(--muted); }
 
