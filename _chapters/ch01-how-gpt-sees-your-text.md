@@ -15,8 +15,8 @@ This chapter builds a BPE tokenizer twice: once as a character-level BPE you bui
 >
 > - What a token is, and why models use tokens instead of raw text
 > - How BPE builds a vocabulary by merging frequent pairs
-> - A toy BPE in Mojo — and the four holes that break it
-> - How a production tokenizer closes those holes
+> - A toy BPE in Mojo — and its four gaps
+> - How a production tokenizer closes those gaps
 > - How GPT-2, GPT-4, and GPT-4o share one BPE engine
 > - What makes the implementation fast
 > - How to verify correctness — and extend the engine with a new tokenizer
@@ -26,7 +26,7 @@ This chapter builds a BPE tokenizer twice: once as a character-level BPE you bui
 
 ---
 
-**Part I — Learn BPE (§§1–4).** A character-level BPE you can hold in your head. Builds, runs, breaks in four instructive ways.
+**Part I — Learn BPE (§§1–4).** A character-level BPE you can hold in your head. It builds, runs, and shows the four gaps Part II closes.
 
 ---
 
@@ -49,7 +49,7 @@ That round-trip is the whole job. A language model never sees text. It sees IDs.
 "hello world" -> [tokenizer] -> [31373, 995] -> model -> [31373, 995] -> [tokenizer] -> "hello world"
 ```
 
-Everything between the two arrows operates on IDs. Embeddings are looked up by ID. Attention mixes IDs. The output projection scores IDs. The model has no idea how the text was split. That decision is made beforehand, offline, when we train the tokenizer on a corpus and freeze the mapping. ID `31373` means `"hello"` forever, for that model, because the weights are baked against it.
+Everything between the two arrows operates on IDs. Embeddings are looked up by ID. Attention mixes IDs. The output projection scores IDs. The model has no idea how the text was split. That decision is made beforehand, offline, when we train the tokenizer on a corpus and freeze the mapping. ID `31373` means `"hello"` for that model, because the weights were trained against that mapping.
 
 So the question the tokenizer has to answer is a practical one: how do you map an unbounded stream of text — new words, typos, code, other languages, emoji — onto a fixed table of integers, deterministically and reversibly?
 
@@ -293,7 +293,7 @@ If you feed a whole string to BPE as one unit, it happily merges across word bou
 
 GPT-2's rule is five cases: contractions (`'s`, `'t`, `'ll` …) split off; letter runs, digit runs, punctuation runs, each with an optional leading space; whitespace for the rest. `"Hello, world!"` becomes `["Hello", ",", " world", "!"]`. Note `" world"` keeps its space. That is why GPT-2 has separate tokens for `"world"` and `" world"`.
 
-The split rule decides the vocabulary. GPT-2 and GPT-4 run the same BPE on the same idea of a corpus and learn incompatible vocabularies, because their split rules differ. When someone says "the GPT-2 tokenizer" they mean three things bound together: the GPT-2 splitter, the GPT-2 vocabulary, the BPE algorithm. Change any one and the IDs change.
+The split rule decides the vocabulary. GPT-2 and GPT-4 run the same BPE on the same idea of a corpus and learn incompatible vocabularies, because their split rules differ. When someone says "the GPT-2 tokenizer" they mean three things bound together: the GPT-2 pre-tokenizer, the GPT-2 vocabulary, the BPE algorithm. Change any one and the IDs change.
 
 In `mbpe` this is a compile-time trait. The listing below shows the two splitting entry points; the rest of the trait (byte mapping, name, special tokens) has defaults or required constants spelled out in §14:
 
@@ -332,7 +332,7 @@ Two details carry forward. First, ties go to the incumbent — the pair inserted
 
 ## 7. Encode replays — it never counts
 
-Training counts and decides. Encoding obeys. Given a new string:
+Training counts pairs and decides the merges; encoding replays them. Given a new string:
 
 1. Split it with the same pre-tokenizer.
 2. Replay the merges in rank order — at every step, the lowest-rank applicable pair wins.
@@ -417,7 +417,7 @@ Six layers, each removing a specific cost. Read each one as an answer to "where 
 4. **Incremental counts.** Naively, each of V merges rescans W words of length L: O(V × W × L), too slow to use on a real corpus. `mbpe` updates only the pairs each occurrence touches (`(a,b)`, `(prev,a)`, `(b,next)` destroyed; `(prev,merged)`, `(merged,next)` created) and finds affected words through a `where_dict` instead of scanning for them. The rescan is gone; the per-round best-pair scan over distinct pairs remains, so treat the speedup as large and measured on real corpora rather than asymptotically tight.
 5. **Two encoders.** Naively, one algorithm serves all word lengths and loses somewhere: a scan is quadratic on long URLs, a heap's setup dominates on short words. Under 32 tokens `mbpe` linearly scans; at 32+ it switches to a heap over a linked list, O(n log n). The 32 is `comptime SCAN_LIMIT` in `bpe/tokenizer.mojo`, set from measuring the crossover on real corpora per the code comment. There is no published crossover curve — only the constant and its comment — so treat 32 as a measured tunable rather than a derived one. Flip the one number, rerun `benchmarks/run.sh` on your hardware, watch the long-word columns move. That reproducibility is the claim.
 
-Sixth, compile-time specialization inlines the pre-tokenizer into encode, so the hot path carries no dispatch.
+6. **Specialization.** Compile-time specialization inlines the pre-tokenizer into encode, so the hot path carries no dispatch.
 
 ## 12. Files on disk and the Python face
 
