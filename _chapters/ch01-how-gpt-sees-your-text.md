@@ -49,7 +49,7 @@ That round-trip is the whole job. A language model never sees text. It sees IDs.
 "hello world" -> [tokenizer] -> [31373, 995] -> model -> [31373, 995] -> [tokenizer] -> "hello world"
 ```
 
-Everything between the two arrows operates on IDs. Embeddings are looked up by ID. Attention mixes IDs. The output projection scores IDs. The model has no idea how the text was split. That decision was made beforehand, offline, when somebody trained the tokenizer on a corpus and froze the mapping. ID `31373` means `"hello"` forever, for that model, because the weights were baked against it.
+Everything between the two arrows operates on IDs. Embeddings are looked up by ID. Attention mixes IDs. The output projection scores IDs. The model has no idea how the text was split. That decision is made beforehand, offline, when we train the tokenizer on a corpus and freeze the mapping. ID `31373` means `"hello"` forever, for that model, because the weights are baked against it.
 
 So the question the tokenizer has to answer is a practical one: how do you map an unbounded stream of text — new words, typos, code, other languages, emoji — onto a fixed table of integers, deterministically and reversibly?
 
@@ -67,7 +67,7 @@ The history here is short. Philip Gage described byte pair encoding as a compres
 
 ## 2. What should a token be?
 
-Every tokenizer picks a fixed vocabulary and rewrites all input as entries from that table. Three options present themselves. Two fail in instructive ways.
+Every tokenizer picks a fixed vocabulary and rewrites all input as entries from that table. Three options present themselves. Two of them are not practical as we would see.
 
 **Words.** Intuitive, short sequences, embeddings carry meaning directly. But no fixed table covers English plus names, typos, identifiers like `resurrect_db_connection()`, URLs, and every other language. Whatever misses becomes `<UNK>`, and the information is gone:
 
