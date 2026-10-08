@@ -48,7 +48,7 @@ That round-trip is the whole job. A language model never sees text. It sees IDs.
 
 Everything between the two arrows operates on IDs. Embeddings are looked up by ID. Attention mixes IDs. The output projection scores IDs. The model has no idea how the text was split. That decision is made beforehand, offline, when we train the tokenizer on a corpus and freeze the mapping. ID `31373` means `"hello"` for that model, because the weights were trained against that mapping.
 
-So the question the tokenizer has to answer is a practical one: how do you map an unbounded stream of text — new words, typos, code, other languages, emoji — onto a fixed table of integers, deterministically and reversibly?
+So the question the tokenizer has to answer is: how do you map an unbounded stream of text — new words, typos, code, other languages, emoji — onto a fixed table of integers, deterministically and reversibly?
 
 A token is whatever piece got an ID. It need not be a word. In some vocabularies you will see entries like these:
 
