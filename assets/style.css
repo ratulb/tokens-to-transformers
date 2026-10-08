@@ -1,25 +1,25 @@
 /* Tokens to Transformers — a book, not a blog.
    Serif body, generous measure. No sidebars, no dates, no tags.
-   Color system ported from techcottage: greenish gradient backdrop, light
-   text with shadow, amber links, code on solid dark surfaces. */
+   Paper-light theme: warm paper page, dark ink, amber links,
+   code on solid dark surfaces. */
 
 :root {
-  --bg-gradient: linear-gradient(120deg, #0650b1, rgb(0, 128, 0));
-  --ink: #d4d4d8;
-  --muted: #d4d4d8;
-  --accent: #fbbf24;
-  --accent-hover: #ffffff;
-  --rule: rgba(255, 255, 255, 0.15);
+  --bg: #faf8f2;
+  --ink: #1c1a17;
+  --muted: #6b655c;
+  --accent: #b45309;
+  --accent-hover: #78350f;
+  --rule: rgba(28, 26, 23, 0.18);
   --box: transparent;
   --code: #161b22;
   --code-ink: #e6edf3;
+  --code-inline-bg: #f0e7d3;
 }
 
 * { box-sizing: border-box; }
 
 html, body {
-  background: var(--bg-gradient) !important;
-  background-attachment: fixed !important;
+  background: var(--bg);
   min-height: 100vh;
 }
 
@@ -28,9 +28,10 @@ body {
   color: var(--ink);
   font-family: "Iowan Old Style", Charter, Georgia, "Times New Roman", serif;
   font-size: 1.125rem;
-  line-height: 1.75;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  line-height: 1.7;
 }
+
+p, li { text-wrap: pretty; }
 
 .wrap {
   max-width: 56rem;
@@ -88,14 +89,13 @@ a:hover { color: var(--accent-hover); }
   margin: 1rem 0 0.5rem;
   padding: 0.6rem 1.4rem;
   background: var(--accent);
-  color: #161b22;
+  color: #fffdf7;
   text-decoration: none;
   border-radius: 3px;
   font-size: 1.1rem;
   font-weight: 600;
-  text-shadow: none;
 }
-.cta:hover { color: #161b22; background: #ffffff; }
+.cta:hover { color: #fffdf7; background: var(--accent-hover); }
 
 /* Chapter list: the table of contents. */
 .chapter-list {
@@ -144,7 +144,7 @@ blockquote {
   border-left: 3px solid var(--accent);
   border-radius: 0 4px 4px 0;
   font-size: 1.02rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 20px rgba(28, 26, 23, 0.12);
 }
 blockquote p { margin: 0.5rem 0; }
 blockquote ul, blockquote ol { margin: 0.5rem 0; padding-left: 1.3rem; }
@@ -153,7 +153,7 @@ blockquote ul, blockquote ol { margin: 0.5rem 0; padding-left: 1.3rem; }
 #markdown-toc {
   border: 1px solid var(--rule);
   background: var(--box);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 20px rgba(28, 26, 23, 0.12);
   padding: 1rem 1.2rem;
   font-size: 1rem;
   list-style: none;
@@ -169,15 +169,14 @@ blockquote ul, blockquote ol { margin: 0.5rem 0; padding-left: 1.3rem; }
 #markdown-toc a { text-decoration: none; color: var(--ink); }
 #markdown-toc a:hover { color: var(--accent); }
 
-/* Code: solid dark surfaces, never the gradient. */
+/* Code: inline tokens on a paper tint, blocks on solid dark surfaces. */
 code {
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 0.88em;
-  background: var(--code);
-  color: var(--code-ink);
+  font-size: 0.92em;
+  background: var(--code-inline-bg);
+  color: var(--ink);
   padding: 0.1em 0.35em;
   border-radius: 3px;
-  text-shadow: none;
 }
 pre {
   background: var(--code);
@@ -185,11 +184,10 @@ pre {
   padding: 1rem 1.2rem;
   overflow-x: auto;
   border-radius: 4px;
-  line-height: 1.55;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-  text-shadow: none;
+  line-height: 1.6;
+  box-shadow: 0 4px 20px rgba(28, 26, 23, 0.18);
 }
-pre code { background: none; padding: 0; }
+pre code { background: none; color: var(--code-ink); padding: 0; }
 
 /* Tables */
 table {
@@ -225,7 +223,7 @@ thead th { border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink)
   text-decoration: none;
   color: var(--ink);
   height: 100%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 20px rgba(28, 26, 23, 0.12);
 }
 .prev-next a:hover { border-color: var(--accent); }
 .prev-next span span, .prev-next a span {
