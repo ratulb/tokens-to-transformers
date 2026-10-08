@@ -2,3 +2,6 @@ _site/
 .jekyll-cache/
 .jekyll-metadata
 .sass-cache/
+# pixi environments
+.pixi/*
+!.pixi/config.toml
