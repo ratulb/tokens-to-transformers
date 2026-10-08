@@ -32,6 +32,7 @@ body {
 }
 
 p, li { text-wrap: pretty; }
+main p { text-align: justify; hyphens: auto; }
 
 .wrap {
   max-width: 56rem;
