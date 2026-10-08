@@ -52,15 +52,16 @@ If you need a refresher first, these are good places to start:
 
 ## Read the book
 
-**Chapter 1: How GPT Sees Your Text** · [read →](https://ratulb.github.io/tokens-to-transformers/ch01/)
+**Chapter 1: From Text to Token IDs** · [read →](https://ratulb.github.io/tokens-to-transformers/ch01/)
 
-> Eleven characters go in, two integers come out. Build a BPE tokenizer by hand, see
-> where this small version breaks, then read how `mbpe`, a production-grade tokenizer
-> that matches tiktoken byte for byte, fixes each problem.
+> Eleven characters go in, two integers come out. Read and run a small BPE
+> tokenizer, see where this small version breaks, then read how `mbpe`,
+> a production-grade tokenizer that matches tiktoken byte for byte,
+> fixes each problem.
 
 | # | Chapter | Status |
 |---|---------|--------|
-| 1 | How GPT Sees Your Text | ✅ Published |
+| 1 | From Text to Token IDs | ✅ Published |
 | 2 | Attention from Scratch | 🚧 In progress |
 | 3 | Assembling GPT-2 | 📝 Planned |
 | 4 | Pretraining on TinyStories | 📝 Planned |
