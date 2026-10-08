@@ -121,7 +121,7 @@ a:hover { color: var(--accent-hover); }
   font-variant: small-caps;
   letter-spacing: 0.05em;
 }
-.chapter-list p { margin: 0.3rem 0 0; font-size: 1.05rem; }
+.chapter-list p { margin: 0.3rem 0 0; }
 
 .coming-next { padding-left: 1.2rem; }
 .coming-next li { margin: 0.5rem 0; }
