@@ -1,10 +1,10 @@
-"""Chapter 1 parity probe, Mojo side.
+"""Chapter 1 validation, Mojo side.
 
-Run from the repo root with `pixi run parity`.
+Run from the repo root with `pixi run validate`.
 
 Encodes the Raschka sentence and the-verdict.txt with mbpe (gpt2, cl100k,
-o200k) and writes the full ID lists to probes/ch01/out/. The Python half
-(probes/ch01/parity_tiktoken.py) diffs them against tiktoken.
+o200k) and writes the full ID lists to validate/ch01/out/. The Python half
+(validate/ch01/validate_tiktoken.py) diffs them against tiktoken.
 """
 from bpe.tokenizer import Tokenizers
 
@@ -19,7 +19,7 @@ def dump(path: String, ids: List[Int]) raises:
 
 def main() raises:
     var verdict_path = "assets/data/the-verdict.txt"
-    var out_dir = "probes/ch01/out/"
+    var out_dir = "validate/ch01/out/"
     var raschka = (
         "Hello, do you like tea? <|endoftext|> "
         "In the sunlit terraces of someunknownPlace."

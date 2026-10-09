@@ -1,9 +1,9 @@
-"""Chapter 1 parity probe, tiktoken side. Run from the repo root with:
-    pixi run parity
+"""Chapter 1 validation, tiktoken side. Run from the repo root with:
+    pixi run validate
 (which runs the Mojo half first, then this file).
 
 Re-encodes the same inputs with the reference tiktoken library, diffs the
-full ID lists against probes/ch01/out/mbpe_*.txt, and prints the token /
+full ID lists against validate/ch01/out/mbpe_*.txt, and prints the token /
 mismatch tables that appear in Chapter 1, section 1.8. Exits nonzero on any
 mismatch.
 """
@@ -12,7 +12,7 @@ import sys
 import tiktoken
 
 VERDICT = "assets/data/the-verdict.txt"
-OUT = "probes/ch01/out/"
+OUT = "validate/ch01/out/"
 RASCHKA = (
     "Hello, do you like tea? <|endoftext|> "
     "In the sunlit terraces of someunknownPlace."
@@ -56,7 +56,7 @@ def main():
 
     if failures:
         sys.exit(1)
-    print("\nparity OK: mbpe and tiktoken agree ID-for-ID")
+    print("\nvalidation OK: mbpe and tiktoken agree ID-for-ID")
 
 
 if __name__ == "__main__":

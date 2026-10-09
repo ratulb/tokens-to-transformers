@@ -7,7 +7,7 @@ version = "0.1.0"
 preview = ["pixi-build"]
 
 [tasks]
-parity = "pixi run mojo probes/ch01/parity_mbpe.mojo && pixi run python probes/ch01/parity_tiktoken.py"
+validate = "pixi run mojo validate/ch01/validate_mbpe.mojo && pixi run python validate/ch01/validate_tiktoken.py"
 
 [dependencies]
 mojo = "1.1.0.*"
