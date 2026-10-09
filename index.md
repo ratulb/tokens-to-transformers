@@ -27,5 +27,3 @@ description: "Build a GPT-2 from scratch in Mojo — tokenizer to training loop.
 ## How this book works
 
 Nothing here is pseudo-code. The book is grounded in two open-source libraries — [mbpe](https://github.com/ratulb/mbpe), a production BPE tokenizer, and [Tenmo](https://github.com/ratulb/tenmo), a tensor library and neural network framework in Mojo. Every snippet is drawn from those repos at a pinned revision, and the test commands reproduce them. Each chapter names its revisions up front, in a "Code for this chapter" note where the building starts.
-
-One chapter per page, with its own table of contents — so any chapter can be linked and quoted on its own. Use the previous/next cards at the foot of each chapter to read in order, or jump anywhere from the contents above.
