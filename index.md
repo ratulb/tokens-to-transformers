@@ -16,9 +16,13 @@ description: "Build a GPT-2 from scratch in Mojo — tokenizer to training loop.
 
 {% include chapter_list.html %}
 
-### Coming next
+### Chapter status
 
-- **Chapter 6 — Fine-tuning for Classification** <span class="status">in progress</span>
+- **Chapter 2 — From Token IDs to Vectors** <span class="status">Complete</span>
+- **Chapter 3 — Attention from Scratch** <span class="status">Complete</span>
+- **Chapter 4 — Assembling GPT-2** <span class="status">Complete</span>
+- **Chapter 5 — Pretraining on TinyStories** <span class="status">Complete</span>
+- **Chapter 6 — Fine-tuning for Classification** <span class="status">Complete</span>
 - **Chapter 7 — Instruction Fine-tuning** <span class="status">planned</span>
 - **Chapter 8 — The BERT Encoder Side** <span class="status">planned</span>
 
