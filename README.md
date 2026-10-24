@@ -63,25 +63,25 @@ If you need a refresher first, these are good places to start:
 > a production-grade tokenizer that matches tiktoken byte for byte,
 > fixes each problem.
 
-**Chapter 2: From Token IDs to Vectors** · [read →](https://ratulb.github.io/tokens-to-transformers/ch02/)
+**Chapter 2: From Token IDs to Vectors** 
 
 > A flat list of IDs in, vectors out. Batch the story into windows, look up
 > each ID's row, add positions — then check every shape and count against
 > GPT-2's configuration.
 
-**Chapter 3: Attention from Scratch** · [read →](https://ratulb.github.io/tokens-to-transformers/ch03/)
+**Chapter 3: Attention from Scratch** 
 
 > Eight windows in, eight windows out — but every vector now sees the others.
 > Score, weight, mix, plus the mask that hides the future and twelve heads
 > that divide the width.
 
-**Chapter 4: Assembling GPT-2** · [read →](https://ratulb.github.io/tokens-to-transformers/ch04/)
+**Chapter 4: Assembling GPT-2** 
 
 > One attention layer is not a language model. Layer norm, GELU, residuals,
 > twelve blocks, a tied head — then OpenAI's weights, checked against the
 > real GPT-2, ending in speech.
 
-**Chapter 5: Pretraining on TinyStories** · [read →](https://ratulb.github.io/tokens-to-transformers/ch05/)
+**Chapter 5: Pretraining on TinyStories**
 
 > The loss that scores wrongness, the step downhill by hand, and a 6.9M
 > model trained on a storybook with its own tokenizer — attention, neighbours,
@@ -90,16 +90,16 @@ If you need a refresher first, these are good places to start:
 | # | Chapter | Status |
 |---|---|---|
 | 1 | From Text to Token IDs | ✅ Published |
-| 2 | From Token IDs to Vectors | ✅ Published |
-| 3 | Attention from Scratch | ✅ Published |
-| 4 | Assembling GPT-2 | ✅ Published |
-| 5 | Pretraining on TinyStories | ✅ Published |
-| 6 | Fine-tuning for Classification | ✅ Complete (not yet published) |
+| 2 | From Token IDs to Vectors | ✅ Complete |
+| 3 | Attention from Scratch | ✅ Complete |
+| 4 | Assembling GPT-2 | ✅ Complete |
+| 5 | Pretraining on TinyStories | ✅ Complete |
+| 6 | Fine-tuning for Classification | ✅ Complete |
 | 7 | Instruction Fine-tuning | 📝 Planned |
 | 8 | The BERT Encoder Side | 📝 Planned |
 
-Chapters 1 to 5 are published and free to read. Chapter 6 is complete but not yet
-published; chapters 7 and 8 are in progress. Watch this repository to follow along.
+Chapters 1 to 6 are complete and chapter 1 is free to read. 7 and 8 are planned.
+Watch this repository to follow along.
 
 ---
 
