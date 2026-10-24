@@ -18,6 +18,7 @@ description: "Build a GPT-2 from scratch in Mojo — tokenizer to training loop.
 
 ### Chapter status
 
+- **Chapter 1 — From Text to Token IDs** <span class="status">Published</span>
 - **Chapter 2 — From Token IDs to Vectors** <span class="status">Complete</span>
 - **Chapter 3 — Attention from Scratch** <span class="status">Complete</span>
 - **Chapter 4 — Assembling GPT-2** <span class="status">Complete</span>
