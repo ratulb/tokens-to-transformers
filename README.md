@@ -11,7 +11,8 @@ The book is code first. Each chapter shows the code, runs it, and explains it.
 
 It is built on three open-source repositories, listed under [Code](#code):
 a small learning tokenizer, used once in Chapter 1 and left behind, and
-the two production libraries — `mbpe` and `tenmo` — that everything else
+the two production libraries — [`mbpe`](https://github.com/ratulb/mbpe) and
+[`tenmo`](https://github.com/ratulb/tenmo) — that everything else
 stands on. Nothing in
 the book is pseudo-code. Every snippet comes from those repositories at a pinned
 revision, and the test commands in each chapter reproduce them.
